@@ -87,14 +87,12 @@ from specific_funcs import (
     control_unbind
 )
 
-
-# Testing
 if __name__ == "__main__":
     var_result = "result"
-    UnitBind(FLARE, jump_instruction_label="cook")
+    UnitBind(FLARE, jump_instruction_label="jump_to_start")
     Sensor(var_result, UNIT, BLAST_COMPOUND)
     control_unbind()
-    Jump("cook", "equal", var_result, "10")
+    Jump("jump_to_start", "equal", var_result, "10")
     UnitLocate(BUILDING, "core", FALSE, COPPER, "outx", "outy", "found", BUILDING)
     control_move("outx", "outy")
     control_item_take(BUILDING, BLAST_COMPOUND, "10")
