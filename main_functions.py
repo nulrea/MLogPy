@@ -1,11 +1,25 @@
 """
 A Python representation to create a Mindustry code for processors.
 Meant to be used with VSCode and some editors, as the document will be overwritten.
+
+Note:
+All functions that can
 """
+
+from typing import Any, Literal
+from constants import BUILDING, COPPER, POLY, _UnitType, _SortType, _LookupType, _BuildingType
+
 
 _instructions: list[tuple[str, str | None]] = []
 _jump_labels: set[str] = set()
 _output: list[str] = []
+
+class String:
+    def __init__(self, str_: Any):
+        self.str_ = str(str_)
+
+    def __str__(self):
+        return f'"{self.str_}"'
 
 def convert_to_text():
     _jump_location: dict[str, int] = {}
@@ -13,184 +27,362 @@ def convert_to_text():
     for i, (instruction, jump_label) in enumerate(_instructions):
         if jump_label != None:
             _jump_location[jump_label] = i
+        args = instruction.split(" ")
         
         # if the instruction is a jump
         if instruction.startswith("jump"):
-            args = instruction.split(" ")
-
-            if args[1] in _jump_location:
-                # if the jump label exists
-                args[1] = str(_jump_location[args[1]])
-                instruction = " ".join(args)
-            else:
-                # if not and the jump label is a number
-                if all(letter in "0123456789" for letter in args[1]):
-                    instruction = " ".join(args)
+            if len(args) == 0:
+                if args[1] in _jump_location:
+                    # if the jump label exists
+                    args[1] = str(_jump_location[args[1]])
                 else:
                     print(f"Warning: Jump label '{args[1]}' does not exist.")
                     args[1] = "-1"
-                    instruction = " ".join(args)
+        instruction = " ".join(args) if instruction.startswith("jump") else instruction
+        print(instruction)
         _output.append(instruction)
     return "\n".join(_output)
 
-class Function:
-    """
-    A base function class for code.
-    Use `__doc__` to get the function's arguments.
-    """
-    def __init__(self, operation_name: str, *arg_names: str, max_args: int | None = None):
-        self.name = operation_name
-        self.args_ = arg_names
-        self.max_args = max_args
-
-    def __call__(self, *args, jump_instruction_label: str | None = None):
-        args = [str(arg) for arg in args]
-        if self.max_args == None:
-            self.max_args = len(self.args_)
-        if len(args) > self.max_args:
-            raise ValueError(f"Too many arguments for function '{self.name}'. Expected at most {self.max_args}, got {len(args)}.")
-        try:
-            if all(letter in "0123456789" for letter in jump_instruction_label):
-                raise ValueError("Jump label cannot be a number. Remove this statement by deleting this if statement directly.")
-        except TypeError:
-            pass
-        if jump_instruction_label != None:
-            if jump_instruction_label in _jump_labels:
-                raise ValueError(f"Jump label '{jump_instruction_label}' already exists.")
-        _jump_labels.add(jump_instruction_label)
-        _instructions.append((" ".join([self.name, *args, *["0" for i in (range(self.max_args - len(args)) if self.max_args != None else range(0))]]), jump_instruction_label))
-    
-    def __docs__(self):
-        return "Arguments: " + ", ".join(self.args_)
+def func(*args, jump_instruction_label, **kwargs) -> None:
+    try:
+        if all(letter in "0123456789" for letter in jump_instruction_label):
+            raise ValueError("Jump label cannot be a number. Remove this statement by deleting this if statement directly.")
+    except TypeError:
+        pass
+    if args.__len__ == 0:
+        raise ValueError("Instruction cannot be empty.")
+    if jump_instruction_label != None:
+        if jump_instruction_label in _jump_labels:
+            raise ValueError(f"Jump label '{jump_instruction_label}' already exists.")
+    _jump_labels.add(jump_instruction_label)
+    _instructions.append((" ".join([str(i) for i in [*args, *(kwargs.values())]]), jump_instruction_label))
 
 # functions
 
 # i/o
-Read = Function('read', 'result', 'cell', 'at')
-"""
-Read a number from a linked memory cell.
-"""
-Write = Function('write', 'result', 'cell', 'at')
-"""
-Write a number from a linked memory cell.
-"""
-Draw = Function('draw', 'operation_type', 'arg1', 'arg2', 'arg3', 'arg4', 'arg5', 'arg6', max_args=7)
-"""
-Add an operation to the drawing buffer.
+def Read(
+        result_var = 'result', 
+        to = 'cell1', 
+        at = 0, 
+        *, 
+        jump_label = None) -> None:
+    """
+    Read a number from a linked memory cell.
 
-Does not display anything until **Draw Flush** is used.
-"""
-Print = Function('print', 'string')
-"""
-Add text to the print buffer.
+    Parameters
+    ----------
+    result_var : variable_name
+        Variable name to store the result.
+    
+    to : structure_name
+        Cell to read from.
 
-Does not display anything until **Print Flush** is used.
-"""
-PrintChar = Function('printchar', 'char')
-"""
-Add a UTF-16 character or content icon to the print buffer.
+    at : int
+        Cell (data location) to read from.
+    """
+    func('read', result_var, to, at, jump_instruction_label=jump_label)
+def Write(
+        result_var = 'result', 
+        to = 'cell1', 
+        at = 0, 
+        *, 
+        jump_label = None) -> None:
+    """
+    Write a number from a linked memory cell.
 
-Does not display anything until **Print Flush** is used.
-"""
-Format = Function('format', 'string')
-"""
-Replace next placeholder in text buffer with a value.
+    Parameters
+    ----------
+    result_var : variable_name
+        Variable name to write the result.
+    
+    to : structure_name
+        Cell to write.
 
-Does not do anything if placeholder pattern is invalid.
+    at : int
+        Cell (data location) to write to.
+    """
+    func('write', result_var, to, at, jump_instruction_label=jump_label)
+def Draw(
+        op='clear', 
+        arg1 = 0, 
+        arg2 = 0, 
+        arg3 = 0, 
+        arg4 = 0, 
+        arg5 = 0, 
+        arg6 = 0, 
+        *, 
+        jump_label = None) -> None:
+    """
+    Add an operation to the drawing buffer.
 
-Placeholder pattern: `"{number 0-9}"`
+    Does not display anything until **DrawFlush** is used.
 
-Example:
-```
-print "test {0}"
-format "example"
-```
-"""
+    Parameters
+    ----------
+    op : op_name
+        Operation to do.
+    
+    arg1~6 : any
+        Arguments to apply. Any unusued argument should be left 0.
+    """
+    func('draw', op, arg1, arg2, arg3, arg4, arg5, arg6, jump_instruction_label=jump_label)
+def Print(
+        string: str | String = String('frog'),
+        *, 
+        jump_label = None
+        ) -> None:
+    """
+    Add text to the print buffer.
 
+    Does not display anything until **PrintFlush** is used.
+
+    Parameters
+    ----------
+    string : str | String
+        String to print.
+    """
+    func('print', string, jump_instruction_label=jump_label)
+def PrintChar(
+        char = 65,
+        *, 
+        jump_label = None
+        ) -> None:
+    """
+    Add a UTF-16 character or content icon to the print buffer.
+
+    Does not display anything until **PrintFlush** is used.
+    """
+    func('printchar', char, jump_instruction_label=jump_label)
+def Format(
+        string: str | String = String('frog'),
+        *, 
+        jump_label = None
+        ) -> None:
+    """
+    Replace next placeholder in text buffer with a value.
+
+    Does not do anything if placeholder pattern is invalid.
+
+    Placeholder pattern: `"{number 0-9}"`
+
+    Example:
+    ```
+    print "test {0}"
+    format "example"
+    ```
+    """
+    func('format', string, jump_instruction_label=jump_label)
 # block control
-DrawFlush = Function('drawflush', 'to')
-"""
-Flush queued **Draw** operations to a display.
-"""
-PrintFlush = Function('printflush', 'to')
-"""
-Flush queued **Print** operations to a message block.
-"""
-GetLink = Function('getlink', 'result', 'linknum')
-"""
-Get a processor link by index. Starts at 0.
-"""
-Control = Function('control', 'operation_type', 'block', 'arg1', 'arg2', 'arg3')
-"""
-Control a building.
-"""
-Radar = Function('radar', 'from', 'operation_type', 'target1', 'target2', 'target3', 'order', 'sort', 'output')
-"""
-Locate units around a building with range.
-"""
-Sensor = Function('sensor', 'result', 'attribute', 'block')
-"""
-Get data from a building or unit.
-"""
-
+def DrawFlush(
+        to='display1',
+        *, 
+        jump_label = None
+        ) -> None:
+    """
+    Flush queued **Draw** operations to a display.
+    """
+    func('drawflush', to, jump_instruction_label=jump_label)
+def PrintFlush(
+        to='message1',
+        *, 
+        jump_label = None
+        ) -> None:
+    """
+    Flush queued **Print** operations to a message block.
+    """
+    func('printflush', to, jump_instruction_label=jump_label)
+def GetLink(
+        result_var = 'result', 
+        linknum: int = 0,
+        *, 
+        jump_label = None
+        ) -> None:
+    """
+    Get a processor link by index. Starts at 0.
+    """
+    func('getlink', result_var, linknum, jump_instruction_label=jump_label)
+def Control(
+        op_type = 'enabled', 
+        block = 'block1', 
+        arg1 = 0, 
+        arg2 = 0, 
+        arg3 = 0,
+        *, 
+        jump_label = None
+        ) -> None:
+    """
+    Control a building.
+    """
+    func('control', op_type, block, arg1, arg2, arg3, jump_instruction_label=jump_label)
+def Radar(
+        from_ = 'turret1', 
+        target1: _UnitType = 'enemy', 
+        target2: _UnitType = 'any', 
+        target3: _UnitType = 'any', 
+        order: Literal[0, 1] = 1, 
+        sort: _SortType = 'distance', 
+        output_var = 'result',
+        *, 
+        jump_label = None
+        ) -> None:
+    """
+    Locate units around a building with range.
+    """
+    func('radar', target1, target2, target3, sort, from_, order, output_var, jump_instruction_label=jump_label)
+def Sensor(
+        result_var = 'result', 
+        attribute = COPPER, 
+        block = 'block1',
+        *, 
+        jump_label = None
+        ) -> None:
+    """
+    Get data from a building or unit.
+    """
+    func('sensor', result_var, block, attribute, jump_instruction_label=jump_label)
 # operations
-Set = Function('set', 'result', 'value')
-"""
-Set a variable.
-"""
-Operation = Function('op', 'operation_type', 'result', 'operand1', 'operand2')
-"""
-Perform an operation on 1-2 variables.
-"""
-Lookup = Function('lookup', 'result', 'type', 'value')
-"""
-Look up an item/liquid/unit/block type ID.
+def Set(
+        var, 
+        value,
+        *, 
+        jump_label = None
+        ) -> None:
+    """
+    Set a variable.
+    """
+    func('set', var, value, jump_instruction_label=jump_label)
+def Operation(
+        result_var = 'result', 
+        op = 'add', 
+        operand1 = 'a', 
+        operand2 = 'b',
+        *, 
+        jump_label = None
+        ) -> None:
+    """
+    Perform an operation on 1-2 variables.
+    """
+    func('op', op, result_var, operand1, operand2, jump_instruction_label=jump_label)
+def Lookup(
+        result_var = 'result', 
+        type_: _LookupType = 'item', 
+        id: int = 0,
+        *, 
+        jump_label = None
+        ) -> None:
+    """
+    Look up an item/liquid/unit/block type ID.
 
-Total counts of each type can be accessed with:
+    Total counts of each type can be accessed with:
 
-`@unitCount`, `@itemCount`, `@liquidCount`, `@blockCount`
+    `@unitCount`, `@itemCount`, `@liquidCount`, `@blockCount`
 
-For the inverse operation, sense `@id` of the object.
-"""
-PackColor = Function('packcolor', 'result', 'r', 'g', 'b', 'a')
-"""
-Pack [0, 1] RBGA components into a single number for drawing or rule-setting.
-"""
+    For the inverse operation, sense `@id` of the object.
+    """
+    func('lookup', type_, result_var, id, jump_instruction_label=jump_label)
+def PackColor(
+        result_var = 'result', 
+        r: float = 1, 
+        g: float = 0, 
+        b: float = 0, 
+        a: float = 1,
+        *, 
+        jump_label = None
+        ) -> None:
+    """
+    Pack [0, 1] RBGA components into a single number for drawing or rule-setting.
+    """
+    func('packcolor', result_var, r, g, b, a)
 
 # control flow
-Wait = Function('wait', 'time')
-"""
-Wait a certain number of seconds.
-"""
-Stop = Function('stop')
-"""
-Halt execution of this processor.
-"""
-End = Function('end')
-"""
-Jump to the top of the instruction stack.
-"""
-Jump = Function('jump', 'to', 'operation_type', 'arg1', 'arg2')
-"""
-Conditionally jump to another statement.
-"""
+def Wait(
+        duration: float = 0.5,
+        *, 
+        jump_label = None        
+        ) -> None:
+    """
+    Wait a certain number of seconds.
+    """
+    func('wait', duration, jump_instruction_label=jump_label)
+def Stop(
+        *, 
+        jump_label = None  
+        ) -> None:
+    """
+    Halt execution of this processor.
+    """
+    func('stop', jump_instruction_label=jump_label)
+def End(
+        *, 
+        jump_label = None  
+        ) -> None:
+    """
+    Jump to the top of the instruction stack.
+    """
+    func('end', jump_instruction_label=jump_label)
+def Jump(
+        to: int | str = -1,
+        op = 'notEqual',
+        operand1 = 'x',
+        operand2 = 'false',
+        *, 
+        jump_label = None  
+        ) -> None:
+    """
+    Conditionally jump to another statement.
+    """
+    func('jump', to, op, operand1, operand2, jump_instruction_label=jump_label)
 
 # unit control
-UnitBind = Function('ubind', 'type')
-"""
-Bind to the next unit of a type, and store it in `@unit`.
-"""
-UnitControl = Function('ucontrol', 'mode', 'arg1', 'arg2', 'arg3', 'arg4', 'arg5')
-"""
-Control the currently bound unit.
-"""
-UnitRadar = Function('uradar', 'target1', 'target2', 'target3', 'order', 'sort', 'output')
-"""
-Locate units around the currently bound unit
-"""
-UnitLocate = Function('ulocate', 'find', 'group', 'is_enemy', 'ore', 'outX', 'outY', 'found', 'building')
-"""
-Locate a specific type of position/building anywhere on the map.
+def UnitBind(
+        type_ = POLY,
+        *, 
+        jump_label = None  
+        ) -> None:
+    """
+    Bind to the next unit of a type, and store it in `@unit`.
+    """
+    func('ubind', type_, jump_instruction_label=jump_label)
+def UnitControl(
+        mode = 'move', 
+        arg1 = 0, 
+        arg2 = 0, 
+        arg3 = 0, 
+        arg4 = 0, 
+        arg5 = 0,
+        *, 
+        jump_label = None
+        ) -> None:
+    """
+    Control the currently bound unit.
+    """
+    func('ucontrol', mode, arg1, arg2, arg3, arg4, arg5, jump_instruction_label=jump_label)
+def UnitRadar(
+        target1: _UnitType = 'enemy', 
+        target2: _UnitType = 'any', 
+        target3: _UnitType = 'any', 
+        order: Literal[0, 1] = 1, 
+        sort: _SortType = 'distance', 
+        result_var = 'result',
+        *, 
+        jump_label = None
+        ) -> None:
+    """
+    Locate units around the currently bound unit
+    """
+    func('uradar', target1, target2, target3, 0, sort, result_var)
+def UnitLocate(
+        find: _BuildingType = BUILDING, 
+        group = 'core', 
+        is_enemy = 'true', 
+        ore = COPPER, 
+        result_var_X = 'outx', 
+        result_var_Y = 'outy', 
+        found = 'found', 
+        building = 'building') -> None:
+    """
+    Locate a specific type of position/building anywhere on the map.
 
-Requires a bound unit.
-"""
+    Requires a bound unit.
+    """
+    func('ulocate', find, group, is_enemy, ore, result_var_X, result_var_Y, found, building)

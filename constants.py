@@ -4,6 +4,9 @@ A file for all the objects in the game in `@`.
 
 # Built-in
 ## Processor
+from typing import Literal
+
+
 THIS = '@this'
 "The logic block executing the code"
 THISX = '@thisx'
@@ -337,6 +340,12 @@ SPAWN = 'spawn'
 "Enemy spawn point. Maybe a core or a position."
 DAMAGED = 'damaged'
 "Damaged ally building."
+BuildingType = [
+    'ore',
+    'building',
+    'spawn',
+    'damaged'
+]
 ControlType = [
     'idle',
     'stop',
@@ -379,3 +388,11 @@ BUILD = 'build'
 GETBLOCK = 'getBlock'
 WITHIN = 'within'
 UNBIND = 'unbind'
+
+# type
+_UnitType = Literal['any', 'enemy', 'ally', 'player', 'attacker', 'flying', 'boss', 'ground']
+_SortType = Literal['distance', 'health', 'shield', 'armor', 'maxHealth']
+# _OperationType = Literal[...]
+_BuildingType = Literal['ore', 'building', 'spawn', 'damaged']
+_LookupType = Literal['block', 'unit', 'item', 'liquid' 'team']
+_ControlType = Literal['idle', 'stop', 'move', 'approach', 'pathfind', 'autoPathfind', 'boost', 'target', 'targetp', 'itemDrop', 'itemTake', 'payDrop', 'payTake', 'payEnter', 'mine', 'flag', 'build', 'getBlock', 'within', 'unbind']
