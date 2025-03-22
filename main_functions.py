@@ -2,12 +2,12 @@
 A Python representation to create a Mindustry code for processors.
 Meant to be used with VSCode and some editors, as the document will be overwritten.
 
-Note:
-All functions that can
+version 0.0.2 | developing stage
 """
 
 from typing import Any, Literal
-from constants import BUILDING, COPPER, POLY, _UnitType, _SortType, _LookupType, _BuildingType
+from constants import _UnitType, _SortType, _LookupType, _BuildingType
+from constants import *
 
 
 _instructions: list[tuple[str, str | None]] = []
