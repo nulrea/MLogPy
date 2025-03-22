@@ -88,20 +88,20 @@ from specific_funcs import (
 )
 
 if __name__ == "__main__":
-    # var_result = "result"
-    # UnitBind(FLARE, jump_instruction_label="jump_to_start")
-    # Sensor(var_result, UNIT, BLAST_COMPOUND)
-    # control_unbind()
-    # Jump("jump_to_start", "equal", var_result, "10")
-    # UnitLocate(BUILDING, "core", FALSE, COPPER, "outx", "outy", "found", BUILDING)
-    # control_move("outx", "outy")
-    # control_item_take(BUILDING, BLAST_COMPOUND, "10")
-    var_remain = 'remain'
-    Sensor(var_remain, TITANIUM, 'nucleus1')
-    Jump(4, 'greaterThan', var_remain, 1000)
-    Control('enabled', 'conveyor2', 0)
-    End()
-    Control('enabled', 'conveyor2', 1)
+    var_result = "result"
+    UnitBind(FLARE, jump_instruction_label="jump_to_start")
+    Sensor(var_result, UNIT, BLAST_COMPOUND)
+    control_unbind()
+    Jump("jump_to_start", "equal", var_result, "10")
+    UnitLocate(BUILDING, "core", FALSE, COPPER, "outx", "outy", "found", BUILDING)
+    control_move("outx", "outy")
+    control_item_take(BUILDING, BLAST_COMPOUND, "10")
+    # var_remain = 'remain'
+    # Sensor(var_remain, TITANIUM, 'nucleus1')
+    # Jump(4, 'greaterThan', var_remain, 1000)
+    # Control('enabled', 'conveyor2', 0)
+    # End()
+    # Control('enabled', 'conveyor2', 1)
     # end
     code = convert_to_text()
     print(code)
